@@ -1,25 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Lightbulb, Power, Wifi, Cpu, ShieldAlert, Thermometer, Droplets, UserCheck, AlertTriangle } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { db } from './firebase';
+import { ref, onValue, set } from 'firebase/database';
 
 export default function App() {
-  // States
   const [isLightOn, setIsLightOn] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
-  
-  // Sensor States
   const [motionDetected, setMotionDetected] = useState(false);
-  const [temperature, setTemperature] = useState(28.5); // Degree Celsius
-  const [humidity, setHumidity] = useState(65); // Percentage
+  const [temperature, setTemperature] = useState(0);
+  const [humidity, setHumidity] = useState(0);
 
-  // Light Toggle Handler
+  // Firebase Realtime Listener
+  useEffect(() => {
+    const sensorRef = ref(db, 'sensorData');
+    
+    // Realtime Database Update
+    const unsubscribe = onValue(sensorRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setIsLightOn(data.lightState || false);
+        setMotionDetected(data.motion || false);
+        setTemperature(data.temperature || 0);
+        setHumidity(data.humidity || 0);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Light Toggle Handler (Web to Firebase)
   const handleToggleLight = () => {
     const nextState = !isLightOn;
-    setIsLightOn(nextState);
+    set(ref(db, 'sensorData/lightState'), nextState);
 
     Swal.fire({
       title: nextState ? 'Light Turned ON! 💡' : 'Light Turned OFF! 🔌',
-      text: `Command sent successfully to ESP32.`,
+      text: `Command sent to Firebase Database`,
       icon: nextState ? 'success' : 'info',
       timer: 1500,
       showConfirmButton: false,
@@ -28,25 +45,6 @@ export default function App() {
       background: '#1f2937',
       color: '#fff'
     });
-  };
-
-  // Simulation: Test PIR Motion Detection
-  const triggerMotionSimulation = () => {
-    setMotionDetected(true);
-    
-    Swal.fire({
-      title: 'Motion Detected! 🚨',
-      text: 'Someone is near your gate/home entrance!',
-      icon: 'warning',
-      background: '#1f2937',
-      color: '#fff',
-      confirmButtonColor: '#ef4444'
-    });
-
-    // Reset motion status after 5 seconds
-    setTimeout(() => {
-      setMotionDetected(false);
-    }, 5000);
   };
 
   return (
@@ -60,7 +58,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Smart Home Automation</h1>
-            <p className="text-xs text-slate-400">ESP32 Gate Security & Environment Hub</p>
+            <p className="text-xs text-slate-400">ESP32 Gate Security & Environment Hub (Firebase Live)</p>
           </div>
         </div>
 
@@ -68,14 +66,14 @@ export default function App() {
           isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400'
         }`}>
           <Wifi size={16} className={isConnected ? 'animate-pulse' : ''} />
-          {isConnected ? 'ESP32 Connected' : 'Offline'}
+          {isConnected ? 'Firebase Synced' : 'Offline'}
         </div>
       </div>
 
       {/* Main Grid Section */}
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* Card 1: Gate Security & Motion Sensor */}
+        {/* Security Status */}
         <div className={`p-6 rounded-3xl border transition-all duration-300 ${
           motionDetected 
             ? 'bg-red-950/40 border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.2)]' 
@@ -105,17 +103,9 @@ export default function App() {
             </p>
             <p className="text-xs text-slate-500">PIR Motion Sensor (HC-SR501)</p>
           </div>
-
-          {/* Test Motion Trigger Button */}
-          <button
-            onClick={triggerMotionSimulation}
-            className="w-full py-2.5 bg-slate-700/60 hover:bg-slate-700 text-xs text-slate-300 rounded-xl font-medium transition"
-          >
-            Test Motion Sensor Alert
-          </button>
         </div>
 
-        {/* Card 2: Main Light Control */}
+        {/* Light Control */}
         <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold flex items-center gap-2 text-slate-200">
@@ -151,7 +141,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Card 3: Temperature Sensor */}
+        {/* Temperature Sensor */}
         <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-orange-500/10 text-orange-400 rounded-2xl border border-orange-500/20">
@@ -165,12 +155,12 @@ export default function App() {
           </div>
           <div className="text-right">
             <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full font-semibold border border-emerald-500/20">
-              Normal
+              Live
             </span>
           </div>
         </div>
 
-        {/* Card 4: Humidity Sensor */}
+        {/* Humidity Sensor */}
         <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20">
@@ -184,7 +174,7 @@ export default function App() {
           </div>
           <div className="text-right">
             <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2.5 py-1 rounded-full font-semibold border border-cyan-500/20">
-              Optimal
+              Live
             </span>
           </div>
         </div>
@@ -192,7 +182,7 @@ export default function App() {
       </div>
 
       <div className="mt-8 text-center text-xs text-slate-500">
-        ESP32 Automation System &bull; Integrated with PIR & DHT11 Sensors
+        ESP32 Realtime Automation Hub &bull; Connected via Firebase DB
       </div>
     </div>
   );
