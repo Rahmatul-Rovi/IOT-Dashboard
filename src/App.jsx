@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
-import { Lightbulb, Power, Wifi, Cpu } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lightbulb, Power, Wifi, Cpu, ShieldAlert, Thermometer, Droplets, UserCheck, AlertTriangle } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export default function App() {
+  // States
   const [isLightOn, setIsLightOn] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  
+  // Sensor States
+  const [motionDetected, setMotionDetected] = useState(false);
+  const [temperature, setTemperature] = useState(28.5); // Degree Celsius
+  const [humidity, setHumidity] = useState(65); // Percentage
 
-  // Toggle Function with SweetAlert2 Notification
+  // Light Toggle Handler
   const handleToggleLight = () => {
     const nextState = !isLightOn;
     setIsLightOn(nextState);
@@ -24,71 +30,169 @@ export default function App() {
     });
   };
 
-  return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6">
-      <div className="max-w-md w-full bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700">
-        
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-600/20 rounded-2xl text-blue-400">
-              <Cpu size={28} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">ESP32 Automation</h1>
-              <p className="text-xs text-slate-400">Home Smart Control Hub</p>
-            </div>
-          </div>
+  // Simulation: Test PIR Motion Detection
+  const triggerMotionSimulation = () => {
+    setMotionDetected(true);
+    
+    Swal.fire({
+      title: 'Motion Detected! 🚨',
+      text: 'Someone is near your gate/home entrance!',
+      icon: 'warning',
+      background: '#1f2937',
+      color: '#fff',
+      confirmButtonColor: '#ef4444'
+    });
 
-          {/* Connection Status Badge */}
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
-            isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400'
-          }`}>
-            <Wifi size={14} className={isConnected ? 'animate-pulse' : ''} />
-            {isConnected ? 'Online' : 'Offline'}
+    // Reset motion status after 5 seconds
+    setTimeout(() => {
+      setMotionDetected(false);
+    }, 5000);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 flex flex-col items-center">
+      
+      {/* Top Header */}
+      <div className="max-w-4xl w-full flex items-center justify-between mb-8 bg-slate-800 p-5 rounded-3xl border border-slate-700 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-blue-600/20 rounded-2xl text-blue-400">
+            <Cpu size={32} />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">Smart Home Automation</h1>
+            <p className="text-xs text-slate-400">ESP32 Gate Security & Environment Hub</p>
           </div>
         </div>
 
-        {/* Device Control Card */}
-        <div className="bg-slate-900/80 rounded-2xl p-6 border border-slate-700/50 flex flex-col items-center">
-          
-          {/* Light Indicator Icon */}
-          <div className={`p-8 rounded-full mb-6 transition-all duration-500 ${
-            isLightOn 
-              ? 'bg-amber-400/20 text-amber-400 shadow-[0_0_50px_rgba(251,191,36,0.3)] scale-105' 
-              : 'bg-slate-800 text-slate-600'
-          }`}>
-            <Lightbulb size={64} className={isLightOn ? 'drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]' : ''} />
+        <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold ${
+          isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400'
+        }`}>
+          <Wifi size={16} className={isConnected ? 'animate-pulse' : ''} />
+          {isConnected ? 'ESP32 Connected' : 'Offline'}
+        </div>
+      </div>
+
+      {/* Main Grid Section */}
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* Card 1: Gate Security & Motion Sensor */}
+        <div className={`p-6 rounded-3xl border transition-all duration-300 ${
+          motionDetected 
+            ? 'bg-red-950/40 border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.2)]' 
+            : 'bg-slate-800/80 border-slate-700'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2 text-slate-200">
+              <ShieldAlert className={motionDetected ? 'text-red-500 animate-bounce' : 'text-slate-400'} size={22} />
+              Gate Security Status
+            </h2>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+              motionDetected ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-700 text-slate-300'
+            }`}>
+              {motionDetected ? 'ALERT' : 'CLEAR'}
+            </span>
           </div>
 
-          <div className="text-center mb-8">
-            <h2 className="text-lg font-semibold text-slate-200">Main Light / Relay</h2>
-            <p className="text-sm text-slate-400 mt-1">
-              Current Status: <span className={`font-bold ${isLightOn ? 'text-amber-400' : 'text-slate-500'}`}>
-                {isLightOn ? 'ON' : 'OFF'}
-              </span>
+          <div className="flex flex-col items-center justify-center py-6">
+            <div className={`p-6 rounded-full mb-4 ${
+              motionDetected ? 'bg-red-500/20 text-red-400' : 'bg-slate-700/50 text-slate-400'
+            }`}>
+              {motionDetected ? <AlertTriangle size={56} /> : <UserCheck size={56} />}
+            </div>
+            
+            <p className="text-sm font-medium text-center text-slate-300 mb-1">
+              {motionDetected ? 'Human Motion Detected Near Gate!' : 'No Movement Detected Nearby'}
             </p>
+            <p className="text-xs text-slate-500">PIR Motion Sensor (HC-SR501)</p>
           </div>
 
-          {/* Switch Button */}
+          {/* Test Motion Trigger Button */}
+          <button
+            onClick={triggerMotionSimulation}
+            className="w-full py-2.5 bg-slate-700/60 hover:bg-slate-700 text-xs text-slate-300 rounded-xl font-medium transition"
+          >
+            Test Motion Sensor Alert
+          </button>
+        </div>
+
+        {/* Card 2: Main Light Control */}
+        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2 text-slate-200">
+              <Lightbulb className={isLightOn ? 'text-amber-400' : 'text-slate-400'} size={22} />
+              Home Relay Control
+            </h2>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+              isLightOn ? 'bg-amber-400/20 text-amber-400 border border-amber-400/30' : 'bg-slate-700 text-slate-400'
+            }`}>
+              {isLightOn ? 'ON' : 'OFF'}
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center py-4">
+            <div className={`p-6 rounded-full mb-4 transition-all duration-300 ${
+              isLightOn ? 'bg-amber-400/20 text-amber-400 shadow-[0_0_40px_rgba(251,191,36,0.3)]' : 'bg-slate-900 text-slate-600'
+            }`}>
+              <Lightbulb size={56} />
+            </div>
+            <p className="text-sm text-slate-400 mb-4">Control main entrance switch</p>
+          </div>
+
           <button
             onClick={handleToggleLight}
-            className={`w-full py-4 px-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 transform active:scale-95 shadow-lg ${
+            className={`w-full py-3.5 px-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 active:scale-95 shadow-lg ${
               isLightOn
-                ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-amber-500/25'
-                : 'bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-slate-300 shadow-slate-900/50'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-slate-950 shadow-amber-500/20'
+                : 'bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 text-slate-300'
             }`}
           >
-            <Power size={22} />
+            <Power size={20} />
             {isLightOn ? 'Turn Off Light' : 'Turn On Light'}
           </button>
         </div>
 
-        {/* Footer Info */}
-        <div className="mt-6 text-center text-xs text-slate-500">
-          Syncs with ESP32 Physical Switch Push Button
+        {/* Card 3: Temperature Sensor */}
+        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-orange-500/10 text-orange-400 rounded-2xl border border-orange-500/20">
+              <Thermometer size={36} />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Temperature</p>
+              <h3 className="text-2xl font-extrabold text-slate-100">{temperature} °C</h3>
+              <p className="text-[10px] text-slate-500">DHT11 Environment Sensor</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full font-semibold border border-emerald-500/20">
+              Normal
+            </span>
+          </div>
         </div>
 
+        {/* Card 4: Humidity Sensor */}
+        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20">
+              <Droplets size={36} />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Humidity</p>
+              <h3 className="text-2xl font-extrabold text-slate-100">{humidity} %</h3>
+              <p className="text-[10px] text-slate-500">Relative Room Humidity</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2.5 py-1 rounded-full font-semibold border border-cyan-500/20">
+              Optimal
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <div className="mt-8 text-center text-xs text-slate-500">
+        ESP32 Automation System &bull; Integrated with PIR & DHT11 Sensors
       </div>
     </div>
   );
