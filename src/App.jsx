@@ -209,29 +209,55 @@ export default function App() {
           </button>
         </div>
 
-        {/* Temperature */}
-        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
+        {/* Temperature Card */}
+        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between shadow-lg hover:border-amber-500/40 transition-all duration-300">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-orange-500/10 text-orange-400 rounded-2xl border border-orange-500/20">
+            <div className="p-4 bg-amber-500/10 text-amber-500 rounded-2xl border border-amber-500/20 flex items-center justify-center">
               <Thermometer size={32} />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Temperature</p>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 text-xs font-medium">Temperature</span>
+                <span className="bg-amber-500/10 text-amber-500 text-[10px] px-2 py-0.5 rounded-full font-bold border border-amber-500/20">
+                  Sensor Active
+                </span>
+              </div>
               <h3 className="text-2xl font-extrabold text-slate-100">{temperature} °C</h3>
             </div>
           </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 text-xs font-semibold self-start sm:self-center">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            LIVE
+          </div>
         </div>
 
-        {/* Humidity */}
-        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
+        {/* Humidity Card */}
+        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between shadow-lg hover:border-cyan-500/40 transition-all duration-300">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20">
+            <div className="p-4 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20 flex items-center justify-center">
               <Droplets size={32} />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Humidity</p>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 text-xs font-medium">Humidity</span>
+                <span className="bg-cyan-500/10 text-cyan-400 text-[10px] px-2 py-0.5 rounded-full font-bold border border-cyan-500/20">
+                  Sensor Active
+                </span>
+              </div>
               <h3 className="text-2xl font-extrabold text-slate-100">{humidity} %</h3>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 text-xs font-semibold self-start sm:self-center">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            LIVE
           </div>
         </div>
 
