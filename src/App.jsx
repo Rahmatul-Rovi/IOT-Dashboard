@@ -218,9 +218,7 @@ export default function App() {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <span className="text-slate-400 text-xs font-medium">Temperature</span>
-                <span className="bg-amber-500/10 text-amber-500 text-[10px] px-2 py-0.5 rounded-full font-bold border border-amber-500/20">
-                  Sensor Active
-                </span>
+               
               </div>
               <h3 className="text-2xl font-extrabold text-slate-100">{temperature} °C</h3>
             </div>
@@ -244,9 +242,7 @@ export default function App() {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <span className="text-slate-400 text-xs font-medium">Humidity</span>
-                <span className="bg-cyan-500/10 text-cyan-400 text-[10px] px-2 py-0.5 rounded-full font-bold border border-cyan-500/20">
-                  Sensor Active
-                </span>
+              
               </div>
               <h3 className="text-2xl font-extrabold text-slate-100">{humidity} %</h3>
             </div>
