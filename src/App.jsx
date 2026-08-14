@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, Power, Wifi, Cpu, ShieldAlert, Thermometer, Droplets, UserCheck, AlertTriangle } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { Lightbulb, Power, Wifi, Cpu, ShieldAlert, Thermometer, Droplets, UserCheck, AlertTriangle, Flame, Waves, Volume2 } from 'lucide-react';
 import { db } from './firebase';
 import { ref, onValue, set } from 'firebase/database';
 
@@ -10,12 +9,12 @@ export default function App() {
   const [motionDetected, setMotionDetected] = useState(false);
   const [temperature, setTemperature] = useState(0);
   const [humidity, setHumidity] = useState(0);
+  const [fireAlert, setFireAlert] = useState(false);
+  const [pumpActive, setPumpActive] = useState(false);
+  const [pumpState, setPumpState] = useState(false);
 
-  // Firebase Realtime Listener
   useEffect(() => {
     const sensorRef = ref(db, 'sensorData');
-    
-    // Realtime Database Update
     const unsubscribe = onValue(sensorRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -23,42 +22,35 @@ export default function App() {
         setMotionDetected(data.motion || false);
         setTemperature(data.temperature || 0);
         setHumidity(data.humidity || 0);
+        setFireAlert(data.fireAlert || false);
+        setPumpActive(data.pumpActive || false);
+        setPumpState(data.pumpState || false);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Light Toggle Handler (Web to Firebase)
   const handleToggleLight = () => {
-    const nextState = !isLightOn;
-    set(ref(db, 'sensorData/lightState'), nextState);
+    set(ref(db, 'sensorData/lightState'), !isLightOn);
+  };
 
-    Swal.fire({
-      title: nextState ? 'Light Turned ON! 💡' : 'Light Turned OFF! 🔌',
-      text: `Command sent to Firebase Database`,
-      icon: nextState ? 'success' : 'info',
-      timer: 1500,
-      showConfirmButton: false,
-      toast: true,
-      position: 'top-end',
-      background: '#1f2937',
-      color: '#fff'
-    });
+  const handleTogglePump = () => {
+    set(ref(db, 'sensorData/pumpState'), !pumpState);
   };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 flex flex-col items-center">
       
-      {/* Top Header */}
-      <div className="max-w-4xl w-full flex items-center justify-between mb-8 bg-slate-800 p-5 rounded-3xl border border-slate-700 shadow-xl">
+      {/* Header */}
+      <div className="max-w-5xl w-full flex items-center justify-between mb-8 bg-slate-800 p-5 rounded-3xl border border-slate-700 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-blue-600/20 rounded-2xl text-blue-400">
             <Cpu size={32} />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">Smart Home Automation</h1>
-            <p className="text-xs text-slate-400">ESP32 Gate Security & Environment Hub (Firebase Live)</p>
+            <h1 className="text-xl md:text-2xl font-bold">Smart Home & Fire Safety Hub</h1>
+            <p className="text-xs text-slate-400">ESP8266 NodeMCU Automation & Security Control</p>
           </div>
         </div>
 
@@ -70,119 +62,164 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main Grid Section */}
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Grid */}
+      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        {/* Security Status */}
+        {/* Fire & Buzzer Alert */}
         <div className={`p-6 rounded-3xl border transition-all duration-300 ${
-          motionDetected 
-            ? 'bg-red-950/40 border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.2)]' 
+          fireAlert 
+            ? 'bg-red-900/80 border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.5)] animate-pulse' 
             : 'bg-slate-800/80 border-slate-700'
         }`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold flex items-center gap-2 text-slate-200">
-              <ShieldAlert className={motionDetected ? 'text-red-500 animate-bounce' : 'text-slate-400'} size={22} />
-              Gate Security Status
+              <Flame className={fireAlert ? 'text-red-400 animate-bounce' : 'text-slate-400'} size={24} />
+              Fire Hazard & Alarm
             </h2>
             <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-              motionDetected ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-700 text-slate-300'
+              fireAlert ? 'bg-red-500 text-white animate-ping' : 'bg-slate-700 text-slate-300'
             }`}>
-              {motionDetected ? 'ALERT' : 'CLEAR'}
+              {fireAlert ? 'FIRE DETECTED' : 'SAFE'}
             </span>
           </div>
 
-          <div className="flex flex-col items-center justify-center py-6">
-            <div className={`p-6 rounded-full mb-4 ${
-              motionDetected ? 'bg-red-500/20 text-red-400' : 'bg-slate-700/50 text-slate-400'
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className={`p-5 rounded-full mb-3 ${
+              fireAlert ? 'bg-red-500 text-white' : 'bg-slate-700/50 text-slate-400'
             }`}>
-              {motionDetected ? <AlertTriangle size={56} /> : <UserCheck size={56} />}
+              {fireAlert ? <Volume2 size={48} className="animate-bounce" /> : <Flame size={48} />}
             </div>
-            
-            <p className="text-sm font-medium text-center text-slate-300 mb-1">
-              {motionDetected ? 'Human Motion Detected Near Gate!' : 'No Movement Detected Nearby'}
+            <p className="text-sm font-bold text-center text-slate-200">
+              {fireAlert ? 'ALARM ACTIVE: FIRE DETECTED!' : 'No Fire Detected'}
             </p>
-            <p className="text-xs text-slate-500">PIR Motion Sensor (HC-SR501)</p>
           </div>
         </div>
 
-        {/* Light Control */}
+        {/* Water Pump */}
         <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg font-bold flex items-center gap-2 text-slate-200">
-              <Lightbulb className={isLightOn ? 'text-amber-400' : 'text-slate-400'} size={22} />
-              Home Relay Control
+              <Waves className={pumpActive ? 'text-cyan-400' : 'text-slate-400'} size={22} />
+              Water Pump
             </h2>
             <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-              isLightOn ? 'bg-amber-400/20 text-amber-400 border border-amber-400/30' : 'bg-slate-700 text-slate-400'
+              pumpActive ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/30' : 'bg-slate-700 text-slate-400'
+            }`}>
+              {pumpActive ? 'PUMPING' : 'IDLE'}
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center py-2">
+            <div className={`p-5 rounded-full mb-2 transition-all duration-300 ${
+              pumpActive ? 'bg-cyan-500/20 text-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.4)] animate-pulse' : 'bg-slate-900 text-slate-600'
+            }`}>
+              <Waves size={48} />
+            </div>
+          </div>
+
+          <button
+            onClick={handleTogglePump}
+            disabled={fireAlert}
+            className={`w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+              fireAlert 
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+                : pumpState 
+                ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400' 
+                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+            }`}
+          >
+            <Power size={16} />
+            {fireAlert ? 'Auto Controlled (Fire Mode)' : pumpState ? 'Stop Pump' : 'Start Pump'}
+          </button>
+        </div>
+
+        {/* Outdoor Motion Detection */}
+        <div className={`p-6 rounded-3xl border transition-all duration-300 ${
+          motionDetected ? 'bg-red-950/40 border-red-500/50' : 'bg-slate-800/80 border-slate-700'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2 text-slate-200">
+              <ShieldAlert className={motionDetected ? 'text-red-500 animate-bounce' : 'text-slate-400'} size={22} />
+              Outdoor Motion
+            </h2>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+              motionDetected ? 'bg-red-500 text-white' : 'bg-slate-700 text-slate-300'
+            }`}>
+              {motionDetected ? 'DETECTED' : 'CLEAR'}
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center py-2">
+            <div className={`p-5 rounded-full mb-3 ${
+              motionDetected ? 'bg-red-500/20 text-red-400' : 'bg-slate-700/50 text-slate-400'
+            }`}>
+              {motionDetected ? <AlertTriangle size={48} /> : <UserCheck size={48} />}
+            </div>
+            <p className="text-sm font-medium text-center text-slate-300">
+              {motionDetected ? 'Someone Detected Outside!' : 'No Movement Outside'}
+            </p>
+          </div>
+        </div>
+
+        {/* Light Relay */}
+        <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-bold flex items-center gap-2 text-slate-200">
+              <Lightbulb className={isLightOn ? 'text-amber-400' : 'text-slate-400'} size={22} />
+              Home Light
+            </h2>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+              isLightOn ? 'bg-amber-400/20 text-amber-400' : 'bg-slate-700 text-slate-400'
             }`}>
               {isLightOn ? 'ON' : 'OFF'}
             </span>
           </div>
 
-          <div className="flex flex-col items-center py-4">
-            <div className={`p-6 rounded-full mb-4 transition-all duration-300 ${
-              isLightOn ? 'bg-amber-400/20 text-amber-400 shadow-[0_0_40px_rgba(251,191,36,0.3)]' : 'bg-slate-900 text-slate-600'
+          <div className="flex flex-col items-center py-2">
+            <div className={`p-5 rounded-full mb-2 ${
+              isLightOn ? 'bg-amber-400/20 text-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.3)]' : 'bg-slate-900 text-slate-600'
             }`}>
-              <Lightbulb size={56} />
+              <Lightbulb size={48} />
             </div>
-            <p className="text-sm text-slate-400 mb-4">Control main entrance switch</p>
           </div>
 
           <button
             onClick={handleToggleLight}
-            className={`w-full py-3.5 px-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-300 active:scale-95 shadow-lg ${
-              isLightOn
-                ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-slate-950 shadow-amber-500/20'
-                : 'bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 text-slate-300'
+            className={`w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+              isLightOn ? 'bg-amber-500 text-slate-950 hover:bg-amber-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
             }`}
           >
-            <Power size={20} />
+            <Power size={16} />
             {isLightOn ? 'Turn Off Light' : 'Turn On Light'}
           </button>
         </div>
 
-        {/* Temperature Sensor */}
+        {/* Temperature */}
         <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-orange-500/10 text-orange-400 rounded-2xl border border-orange-500/20">
-              <Thermometer size={36} />
+              <Thermometer size={32} />
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium">Temperature</p>
               <h3 className="text-2xl font-extrabold text-slate-100">{temperature} °C</h3>
-              <p className="text-[10px] text-slate-500">DHT11 Environment Sensor</p>
             </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full font-semibold border border-emerald-500/20">
-              Live
-            </span>
           </div>
         </div>
 
-        {/* Humidity Sensor */}
+        {/* Humidity */}
         <div className="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20">
-              <Droplets size={36} />
+              <Droplets size={32} />
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium">Humidity</p>
               <h3 className="text-2xl font-extrabold text-slate-100">{humidity} %</h3>
-              <p className="text-[10px] text-slate-500">Relative Room Humidity</p>
             </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2.5 py-1 rounded-full font-semibold border border-cyan-500/20">
-              Live
-            </span>
           </div>
         </div>
 
-      </div>
-
-      <div className="mt-8 text-center text-xs text-slate-500">
-        ESP32 Realtime Automation Hub &bull; Connected via Firebase DB
       </div>
     </div>
   );
